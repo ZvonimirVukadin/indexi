@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-17T19:19:00+00:00",
+ "updated": "2026-10-17T19:21:36+00:00",
  "indices": [
   {
    "symbol": "^GSPC",
@@ -121,7 +121,7 @@
  "funds": [
   {
    "symbol": "capital-breeder",
-   "name": "Capital Breeder",
+   "name": "CB",
    "note": "Fond, u EUR",
    "last": 54.2623,
    "date": "2026-10-15",

@@ -27,7 +27,7 @@ INDICES = [
 
 # Fondovi čiji se prinosi preuzimaju sa stranice društva (prikazuju se na vrhu tablice usporedbe)
 FUNDS = [
-    ("capital-breeder", "Capital Breeder", "https://globalinvest.hr/capital-breeder/"),
+    ("capital-breeder", "CB", "https://globalinvest.hr/capital-breeder/"),
 ]
 
 YEARS = (3, 5, 10)
