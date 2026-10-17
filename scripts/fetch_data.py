@@ -3,7 +3,9 @@
 Novi indeks dodaje se jednim retkom u INDICES (Yahoo simbol, naziv, kratki opis).
 Pokretanje: python scripts/fetch_data.py  (bez dodatnih paketa)
 """
+import html
 import json
+import re
 import time
 import urllib.parse
 import urllib.request
@@ -21,6 +23,11 @@ INDICES = [
     # ("^STOXX50E", "Euro Stoxx 50", "Cjenovni indeks"),
     # ("^FTSE", "FTSE 100", "Cjenovni indeks"),
     # ("^N225", "Nikkei 225", "Cjenovni indeks"),
+]
+
+# Fondovi čiji se prinosi preuzimaju sa stranice društva (prikazuju se na vrhu tablice usporedbe)
+FUNDS = [
+    ("capital-breeder", "Capital Breeder", "https://globalinvest.hr/capital-breeder/"),
 ]
 
 YEARS = (3, 5, 10)
@@ -100,8 +107,47 @@ def compute(symbol, name, note):
     }
 
 
+def page_text(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        s = r.read().decode("utf-8", "replace")
+    s = re.sub(r"<script.*?</script>|<style.*?</style>", "", s, flags=re.S)
+    s = html.unescape(re.sub(r"<[^>]+>", "\n", s))
+    return [l.strip() for l in s.splitlines() if l.strip()]
+
+
+def hr_num(s):
+    return float(s.replace("%", "").replace("EUR", "").replace(".", "").replace(",", ".").strip())
+
+
+def compute_fund(key, name, url):
+    """Prinosi Global Invest fonda: 'Prinos u <godina>' (YTD) i 'PGP N' (prosječni godišnji prinos)."""
+    lines = page_text(url)
+
+    def after(pattern):
+        for i, l in enumerate(lines[:-1]):
+            if re.fullmatch(pattern, l):
+                return lines[i + 1]
+        raise ValueError(f"nije pronađeno: {pattern}")
+
+    periods = {"ytd": {"pct": round(hr_num(after(r"Prinos u \d{4}")), 2)}}
+    for n in YEARS:
+        pa = hr_num(after(f"PGP {n}"))
+        periods[f"{n}y"] = {"pct": round(((1 + pa / 100) ** n - 1) * 100, 2), "pa": round(pa, 2)}
+    i = lines.index("Vrijednost udjela")
+    d = datetime.strptime(lines[i + 2], "%d.%m.%Y").date()
+    return {
+        "symbol": key,
+        "name": name,
+        "note": "Fond, u EUR",
+        "last": hr_num(lines[i + 1]),
+        "date": d.isoformat(),
+        "periods": periods,
+    }
+
+
 def main():
-    out, errors = [], []
+    out, funds, errors = [], [], []
     for sym, name, note in INDICES:
         try:
             out.append(compute(sym, name, note))
@@ -109,12 +155,24 @@ def main():
             errors.append(f"{sym}: {e}")
     if not out:
         raise SystemExit("Nijedan indeks nije dohvaćen: " + "; ".join(errors))
+    try:
+        old = {f["symbol"]: f for f in json.loads(OUT.read_text(encoding="utf-8")).get("funds", [])}
+    except Exception:
+        old = {}
+    for key, name, url in FUNDS:
+        try:
+            funds.append(compute_fund(key, name, url))
+        except Exception as e:
+            errors.append(f"{name}: {e}")
+            if key in old:  # zadrži zadnje poznate podatke
+                funds.append(old[key])
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(
         json.dumps(
             {
                 "updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                 "indices": out,
+                "funds": funds,
                 "errors": errors,
             },
             ensure_ascii=False,
@@ -122,7 +180,7 @@ def main():
         ),
         encoding="utf-8",
     )
-    print(f"OK: {len(out)} indeksa, greške: {errors or 'nema'}")
+    print(f"OK: {len(out)} indeksa, {len(funds)} fondova, greške: {errors or 'nema'}")
 
 
 if __name__ == "__main__":

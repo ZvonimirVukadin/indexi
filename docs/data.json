@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-17T17:09:42+00:00",
+ "updated": "2026-10-17T19:19:00+00:00",
  "indices": [
   {
    "symbol": "^GSPC",
@@ -114,6 +114,32 @@
      "pct": 507.0,
      "pa": 19.76,
      "from": "2016-10-14"
+    }
+   }
+  }
+ ],
+ "funds": [
+  {
+   "symbol": "capital-breeder",
+   "name": "Capital Breeder",
+   "note": "Fond, u EUR",
+   "last": 54.2623,
+   "date": "2026-10-15",
+   "periods": {
+    "ytd": {
+     "pct": 13.31
+    },
+    "3y": {
+     "pct": 116.12,
+     "pa": 29.29
+    },
+    "5y": {
+     "pct": 181.76,
+     "pa": 23.02
+    },
+    "10y": {
+     "pct": 340.76,
+     "pa": 15.99
     }
    }
   }
