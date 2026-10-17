@@ -97,7 +97,7 @@ function render(){
     const sub=`uk. ${fmt(p.pct)}`;
     return `<div class="tile"><div class="lbl">${l} p.a.</div><div class="val num ${cls(val(p))}">${fmt(val(p))}</div><div class="sub num">${sub}</div></div>`;
   }).join("");
-  const rows=[...(data.funds||[]).map(f=>({...f,fund:1})),...list].map(i=>`<tr${i.fund?' class="fund"':""}><td>${i.name}</td>${PERIODS.map(([k])=>{const p=i.periods[k];return p?`<td class="num ${cls(val(p))}">${fmtN(val(p))}</td>`:"<td>—</td>"}).join("")}</tr>`).join("");
+  const rows=[...(data.funds||[]).map(f=>({...f,fund:1})),...list,...(data.extra||[])].map(i=>`<tr${i.fund?' class="fund"':""}><td>${i.name}</td>${PERIODS.map(([k])=>{const p=i.periods[k];return p?`<td class="num ${cls(val(p))}">${fmtN(val(p))}</td>`:"<td>—</td>"}).join("")}</tr>`).join("");
   const upd=new Date(data.updated).toLocaleString("hr-HR",{day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit"});
   document.getElementById("main").innerHTML=`
   <section class="hero">

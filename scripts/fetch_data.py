@@ -30,6 +30,11 @@ FUNDS = [
     ("capital-breeder", "CB", "https://globalinvest.hr/capital-breeder/"),
 ]
 
+# Dodatni redovi samo u tablici usporedbe (na dnu); prinos računat iz cijena prilagođenih za dividende
+TABLE_EXTRA = [
+    ("FXI", "FXI TR", "ETF s dividendama, u USD"),
+]
+
 YEARS = (3, 5, 10)
 OUT = Path(__file__).resolve().parent.parent / "docs" / "data.json"
 URL = "https://query1.finance.yahoo.com/v8/finance/chart/{}?range=11y&interval=1d"
@@ -70,10 +75,13 @@ def pct(now, base):
     return round((now / base - 1) * 100, 2)
 
 
-def compute(symbol, name, note):
+def compute(symbol, name, note, adjusted=False):
     res = fetch(symbol)
     tz = timezone(timedelta(seconds=res["meta"].get("gmtoffset", 0)))
-    closes = res["indicators"]["quote"][0]["close"]
+    if adjusted:
+        closes = res["indicators"]["adjclose"][0]["adjclose"]
+    else:
+        closes = res["indicators"]["quote"][0]["close"]
     series = [
         (datetime.fromtimestamp(t, tz).date(), c)
         for t, c in zip(res["timestamp"], closes)
@@ -147,7 +155,7 @@ def compute_fund(key, name, url):
 
 
 def main():
-    out, funds, errors = [], [], []
+    out, funds, extra, errors = [], [], [], []
     for sym, name, note in INDICES:
         try:
             out.append(compute(sym, name, note))
@@ -155,6 +163,11 @@ def main():
             errors.append(f"{sym}: {e}")
     if not out:
         raise SystemExit("Nijedan indeks nije dohvaćen: " + "; ".join(errors))
+    for sym, name, note in TABLE_EXTRA:
+        try:
+            extra.append(compute(sym, name, note, adjusted=True))
+        except Exception as e:
+            errors.append(f"{sym}: {e}")
     try:
         old = {f["symbol"]: f for f in json.loads(OUT.read_text(encoding="utf-8")).get("funds", [])}
     except Exception:
@@ -173,6 +186,7 @@ def main():
                 "updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                 "indices": out,
                 "funds": funds,
+                "extra": extra,
                 "errors": errors,
             },
             ensure_ascii=False,
