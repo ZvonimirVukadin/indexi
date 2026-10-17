@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Indeksi</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Indeksi">
+<meta name="theme-color" content="#0f1115">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<style>
+:root{
+  --bg:#f5f6f8;--card:#fff;--text:#14171c;--muted:#6b7280;--line:#e5e7eb;
+  --up:#0a8a4a;--down:#c62828;--chip:#e9ebef;--chip-on:#14171c;--chip-on-text:#fff;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0f1115;--card:#181b21;--text:#f2f4f7;--muted:#8b93a1;--line:#2a2f38;
+    --up:#34c77b;--down:#ff5c5c;--chip:#232730;--chip-on:#f2f4f7;--chip-on-text:#0f1115}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text)}
+body{font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+  padding:calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 24px);
+  max-width:560px;margin:0 auto;-webkit-tap-highlight-color:transparent}
+.num{font-variant-numeric:tabular-nums}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+h1{font-size:22px;font-weight:700;letter-spacing:-.01em}
+button.refresh{border:0;background:var(--chip);color:var(--text);border-radius:999px;
+  padding:8px 14px;font:inherit;font-size:14px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin:0 -16px 16px;padding-left:16px;padding-right:16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:0;border-radius:999px;padding:9px 14px;background:var(--chip);color:var(--text);font:inherit;font-size:15px;font-weight:500}
+.chip[aria-pressed=true]{background:var(--chip-on);color:var(--chip-on-text)}
+.hero{background:var(--card);border-radius:18px;padding:18px;margin-bottom:12px}
+.hero .name{font-size:15px;color:var(--muted)}
+.hero .last{font-size:30px;font-weight:700;margin-top:2px}
+.hero .day{font-size:16px;font-weight:600;margin-left:8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.tile{background:var(--card);border-radius:18px;padding:16px}
+.tile .lbl{font-size:13px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.tile .val{font-size:26px;white-space:nowrap;font-weight:700;margin-top:4px;letter-spacing:-.01em}
+.tile .sub{font-size:13px;color:var(--muted);margin-top:2px}
+.up{color:var(--up)}.down{color:var(--down)}
+h2{font-size:15px;color:var(--muted);font-weight:600;margin:0 2px 8px}
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:18px;overflow:hidden;font-size:13.5px}
+th,td{padding:11px 6px;white-space:nowrap;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left;padding-left:14px}
+th:last-child,td:last-child{padding-right:14px}
+tr:last-child td{border-bottom:0}
+th{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase}
+td:first-child{font-weight:600;white-space:normal}
+.foot{font-size:12px;color:var(--muted);margin-top:14px;text-align:center}
+.msg{background:var(--card);border-radius:18px;padding:18px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Indeksi</h1>
+  <button class="refresh" id="refresh">Osvježi</button>
+</header>
+<div class="chips" id="chips"></div>
+<main id="main"><div class="msg">Učitavanje…</div></main>
+<script>
+const PERIODS=[["ytd","YTD"],["3y","3 god."],["5y","5 god."],["10y","10 god."]];
+const val=p=>p.pa??p.pct; // 3/5/10 god. anualizirano, YTD ukupno
+const fmt=n=>(n>0?"+":n<0?"−":"")+Math.abs(n).toLocaleString("hr-HR",{minimumFractionDigits:2,maximumFractionDigits:2})+" %";
+const fmtN=n=>(n>0?"+":n<0?"−":"")+Math.abs(n).toLocaleString("hr-HR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const cls=n=>n>0?"up":n<0?"down":"";
+const dateHr=s=>new Date(s+"T12:00:00").toLocaleDateString("hr-HR",{day:"numeric",month:"numeric",year:"numeric"});
+let data=null,sel=null;
+try{sel=localStorage.getItem("sel")}catch(e){}
+
+function render(){
+  const list=data.indices;
+  if(!list.find(i=>i.symbol===sel))sel=list[0].symbol;
+  const chips=document.getElementById("chips");
+  chips.innerHTML="";
+  for(const i of list){
+    const b=document.createElement("button");
+    b.className="chip";b.textContent=i.name;b.setAttribute("aria-pressed",i.symbol===sel);
+    b.onclick=()=>{sel=i.symbol;try{localStorage.setItem("sel",sel)}catch(e){};render()};
+    chips.appendChild(b);
+  }
+  const x=list.find(i=>i.symbol===sel);
+  const tiles=PERIODS.map(([k,l])=>{
+    const p=x.periods[k];
+    if(!p)return `<div class="tile"><div class="lbl">${l}</div><div class="val">—</div></div>`;
+    const sub=p.pa!=null?`ukupno ${fmt(p.pct)}`:`od ${dateHr(p.from)}`;
+    return `<div class="tile"><div class="lbl">${l}${p.pa!=null?" · godišnje":""}</div><div class="val num ${cls(val(p))}">${fmt(val(p))}</div><div class="sub num">${sub}</div></div>`;
+  }).join("");
+  const rows=list.map(i=>`<tr><td>${i.name}</td>${PERIODS.map(([k])=>{const p=i.periods[k];return p?`<td class="num ${cls(val(p))}">${fmtN(val(p))}</td>`:"<td>—</td>"}).join("")}</tr>`).join("");
+  const upd=new Date(data.updated).toLocaleString("hr-HR",{day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit"});
+  document.getElementById("main").innerHTML=`
+  <section class="hero">
+    <div class="name">${x.name} · ${x.note}</div>
+    <div><span class="last num">${x.last.toLocaleString("hr-HR",{minimumFractionDigits:2,maximumFractionDigits:2})}</span><span class="day num ${cls(x.day)}">${fmt(x.day)}</span></div>
+  </section>
+  <div class="grid">${tiles}</div>
+  <h2>Usporedba u % (3/5/10 god. godišnje)</h2>
+  <table><thead><tr><th>Indeks</th>${PERIODS.map(([,l])=>`<th>${l}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>
+  <p class="foot">Zaključna cijena ${dateHr(x.date)} · ažurirano ${upd} · izvor: Yahoo Finance</p>`;
+}
+
+async function load(){
+  try{
+    const r=await fetch("data.json?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok)throw new Error(r.status);
+    data=await r.json();render();
+  }catch(e){
+    if(!data)document.getElementById("main").innerHTML=`<div class="msg">Podaci trenutno nisu dostupni. Pokušajte ponovno.</div>`;
+  }
+}
+document.getElementById("refresh").onclick=load;
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)load()});
+load();
+</script>
+</body>
+</html>
