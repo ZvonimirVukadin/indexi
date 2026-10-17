@@ -13,11 +13,11 @@ from pathlib import Path
 INDICES = [
     ("^GSPC", "S&P 500", "Cjenovni indeks"),
     ("^SP500TR", "S&P 500 TR", "S dividendama"),
-    ("^IXIC", "Nasdaq Composite", "Cjenovni indeks"),
+    ("^GDAXI", "DAX", "S dividendama, u EUR"),
     ("^NDX", "Nasdaq 100", "Cjenovni indeks"),
     # Primjeri za kasnije:
     # ("^DJI", "Dow Jones", "Cjenovni indeks"),
-    # ("^GDAXI", "DAX", "Total return"),
+    # ("^IXIC", "Nasdaq Composite", "Cjenovni indeks"),
     # ("^STOXX50E", "Euro Stoxx 50", "Cjenovni indeks"),
     # ("^FTSE", "FTSE 100", "Cjenovni indeks"),
     # ("^N225", "Nikkei 225", "Cjenovni indeks"),

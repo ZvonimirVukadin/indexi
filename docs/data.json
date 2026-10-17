@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-17T16:04:51+00:00",
+ "updated": "2026-10-17T17:09:42+00:00",
  "indices": [
   {
    "symbol": "^GSPC",
@@ -60,30 +60,30 @@
    }
   },
   {
-   "symbol": "^IXIC",
-   "name": "Nasdaq Composite",
-   "note": "Cjenovni indeks",
-   "last": 26140.03,
+   "symbol": "^GDAXI",
+   "name": "DAX",
+   "note": "S dividendama, u EUR",
+   "last": 25622.61,
    "date": "2026-10-16",
-   "day": -2.15,
+   "day": 0.95,
    "periods": {
     "ytd": {
-     "pct": 12.47,
-     "from": "2025-12-31"
+     "pct": 4.62,
+     "from": "2025-12-30"
     },
     "3y": {
-     "pct": 92.66,
-     "pa": 24.43,
+     "pct": 68.15,
+     "pa": 18.91,
      "from": "2023-10-16"
     },
     "5y": {
-     "pct": 75.47,
-     "pa": 11.9,
+     "pct": 64.38,
+     "pa": 10.45,
      "from": "2021-10-15"
     },
     "10y": {
-     "pct": 401.33,
-     "pa": 17.49,
+     "pct": 142.17,
+     "pa": 9.25,
      "from": "2016-10-14"
     }
    }
