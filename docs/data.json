@@ -1,11 +1,11 @@
 {
- "updated": "2026-10-26T20:03:18+00:00",
+ "updated": "2026-10-26T21:03:18+00:00",
  "indices": [
   {
    "symbol": "^GSPC",
    "name": "S&P 500",
    "note": "Cjenovni indeks",
-   "last": 7676.78,
+   "last": 7676.77,
    "date": "2026-10-26",
    "day": 0.7,
    "periods": {
@@ -34,7 +34,7 @@
    "symbol": "^SP500TR",
    "name": "S&P 500 TR",
    "note": "S dividendama",
-   "last": 17226.61,
+   "last": 17226.6,
    "date": "2026-10-26",
    "day": 0.7,
    "periods": {
