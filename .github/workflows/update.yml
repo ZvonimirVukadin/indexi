@@ -5,6 +5,9 @@ on:
     # Svakih 30 min tijekom US trgovanja (pon–pet, 13:30–21:00 UTC) + zaključna cijena
     - cron: "*/30 13-20 * * 1-5"
     - cron: "15 21 * * 1-5"
+    # Svaki dan u 13:00 po zagrebačkom vremenu: 11:00 UTC ljeti, 12:00 UTC zimi (vidi korak Termin)
+    - cron: "0 11 * * *"
+    - cron: "0 12 * * *"
   workflow_dispatch:
 
 permissions:
@@ -14,12 +17,26 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
+      - name: Termin
+        id: gate
+        env:
+          CRON: ${{ github.event.schedule }}
+        run: |
+          offset=$(TZ=Europe/Zagreb date +%z)
+          run=true
+          [ "$CRON" = "0 11 * * *" ] && [ "$offset" != "+0200" ] && run=false
+          [ "$CRON" = "0 12 * * *" ] && [ "$offset" != "+0100" ] && run=false
+          echo "run=$run" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v5
+        if: steps.gate.outputs.run == 'true'
       - uses: actions/setup-python@v6
+        if: steps.gate.outputs.run == 'true'
         with:
           python-version: "3.12"
       - run: python scripts/fetch_data.py
+        if: steps.gate.outputs.run == 'true'
       - name: Commit
+        if: steps.gate.outputs.run == 'true'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
