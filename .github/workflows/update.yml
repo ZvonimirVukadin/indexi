@@ -2,12 +2,13 @@ name: Ažuriranje podataka
 
 on:
   schedule:
-    # Svakih 30 min tijekom US trgovanja (pon–pet, 13:30–21:00 UTC) + zaključna cijena
-    - cron: "*/30 13-20 * * 1-5"
-    - cron: "15 21 * * 1-5"
-    # Svaki dan u 13:00 po zagrebačkom vremenu: 11:00 UTC ljeti, 12:00 UTC zimi (vidi korak Termin)
-    - cron: "0 11 * * *"
-    - cron: "0 12 * * *"
+    # Tijekom US trgovanja (pon–pet), izvan punog i polusata jer GitHub tada manje kasni
+    - cron: "7,37 13-20 * * 1-5"
+    - cron: "17 21 * * 1-5"
+    # Svaki dan u 13:00 po zagrebačkom vremenu: start u 11:37 (09:37 UTC ljeti, 10:37 UTC zimi),
+    # pa korak Termin čeka do 13:00 jer GitHub često kasni i više od 40 min
+    - cron: "37 9 * * *"
+    - cron: "37 10 * * *"
   workflow_dispatch:
 
 permissions:
@@ -24,9 +25,16 @@ jobs:
         run: |
           offset=$(TZ=Europe/Zagreb date +%z)
           run=true
-          [ "$CRON" = "0 11 * * *" ] && [ "$offset" != "+0200" ] && run=false
-          [ "$CRON" = "0 12 * * *" ] && [ "$offset" != "+0100" ] && run=false
+          wait=false
+          case "$CRON" in
+            "37 9 * * *") [ "$offset" = "+0200" ] && wait=true || run=false ;;
+            "37 10 * * *") [ "$offset" = "+0100" ] && wait=true || run=false ;;
+          esac
           echo "run=$run" >> "$GITHUB_OUTPUT"
+          if [ "$wait" = true ]; then
+            left=$(( $(TZ=Europe/Zagreb date -d "13:00" +%s) - $(date +%s) ))
+            if [ "$left" -gt 0 ]; then sleep "$left"; fi
+          fi
       - uses: actions/checkout@v5
         if: steps.gate.outputs.run == 'true'
       - uses: actions/setup-python@v6

@@ -5,7 +5,7 @@ promjene u postotku na dvije decimale. Za 3/5/10 godina prikazan je i prosječni
 
 ## Kako radi
 - `scripts/fetch_data.py` dohvaća povijest s Yahoo Finance i zapisuje `docs/data.json`.
-- GitHub Actions (`.github/workflows/update.yml`) to pokreće svakih 30 min tijekom US trgovanja i nakon zatvaranja.
+- GitHub Actions (`.github/workflows/update.yml`) to pokreće radnim danom tijekom US trgovanja (zadano svakih 30 min, stvarno često rjeđe jer GitHub kasni), nakon zatvaranja te svaki dan u 13:00 po zagrebačkom vremenu.
 - GitHub Pages poslužuje `docs/` kao web stranicu. Sve je besplatno.
 
 ## Postavljanje (jednokratno, ~5 min)
