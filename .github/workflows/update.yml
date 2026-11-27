@@ -1,50 +1,33 @@
 name: Ažuriranje podataka
 
 on:
-  schedule:
-    # Tijekom US trgovanja (pon–pet), izvan punog i polusata jer GitHub tada manje kasni
-    - cron: "7,37 13-20 * * 1-5"
-    - cron: "17 21 * * 1-5"
-    # Svaki dan u 13:00 po zagrebačkom vremenu: start u 11:37 (09:37 UTC ljeti, 10:37 UTC zimi),
-    # pa korak Termin čeka do 13:00 jer GitHub često kasni i više od 40 min
-    - cron: "37 9 * * *"
-    - cron: "37 10 * * *"
+  # Glavni okidač: vanjski cron (cron-job.org) poziva workflow_dispatch preko GitHub API-ja
+  # jer GitHubov raspored kasni satima. Termini i postavljanje: README.md.
   workflow_dispatch:
+  schedule:
+    # Samo rezerva ako vanjski okidač zakaže (GitHub ih zna odgoditi i po nekoliko sati)
+    - cron: "17 21 * * 1-5"
+    - cron: "37 11 * * *"
 
 permissions:
   contents: write
 
+# Pokretanja koja se preklope idu jedno za drugim, ne istodobno
+concurrency:
+  group: azuriranje-podataka
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Termin
-        id: gate
-        env:
-          CRON: ${{ github.event.schedule }}
-        run: |
-          offset=$(TZ=Europe/Zagreb date +%z)
-          run=true
-          wait=false
-          case "$CRON" in
-            "37 9 * * *") [ "$offset" = "+0200" ] && wait=true || run=false ;;
-            "37 10 * * *") [ "$offset" = "+0100" ] && wait=true || run=false ;;
-          esac
-          echo "run=$run" >> "$GITHUB_OUTPUT"
-          if [ "$wait" = true ]; then
-            left=$(( $(TZ=Europe/Zagreb date -d "13:00" +%s) - $(date +%s) ))
-            if [ "$left" -gt 0 ]; then sleep "$left"; fi
-          fi
       - uses: actions/checkout@v5
-        if: steps.gate.outputs.run == 'true'
       - uses: actions/setup-python@v6
-        if: steps.gate.outputs.run == 'true'
         with:
           python-version: "3.12"
       - run: python scripts/fetch_data.py
-        if: steps.gate.outputs.run == 'true'
       - name: Commit
-        if: steps.gate.outputs.run == 'true'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
